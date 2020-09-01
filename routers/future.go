@@ -134,12 +134,20 @@ func (future *CallableFuture) Status() FutureStatus {
 
 func (future *CallableFuture) Execute() {
 	// check if it is canceled or in other status
+	future.RW.RLock()
 	status := future.status
 	if status > NEW {
+		future.RW.RUnlock()
 		return
 	}
 
+	future.RW.RUnlock()
 	future.RW.Lock()
+	if future.status > NEW {
+		future.RW.Unlock()
+		return
+	}
+
 	future.status = RUNNING
 	future.RW.Unlock()
 
